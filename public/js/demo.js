@@ -66,7 +66,8 @@ $(document).ready(function () {
         console.log(dialog);
         var texts = dialog.conversation.response;
         var response = texts.join('&lt;br/&gt;'); // &lt;br/&gt; is <br/>
-        response += '&lt;br/&gt;'
+        if(dialog.conversation.response[0] !== undefined && dialog.conversation.response[0].indexOf('Please select a sensor') !== -1) 
+          response += '&lt;br/&gt;'
         $chatInput.show();
         $chatInput[0].focus();
 

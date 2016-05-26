@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 IBM Corp. All Rights Reserved.
+ * Copyright 2016 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,17 +35,17 @@ var DISPLAY_NO_DEVICE = "DISPLAY NO DEVICE";
 // if bluemix credentials exists, then override local
 var credentials =  extend({
   url: 'https://gateway.watsonplatform.net/dialog/api',
-  username: '2e9c813d-9334-4a40-8d3e-5579bc6fbc76',
-  password: 'sl7EASPJfkQz',
+  username: 'xxxx',
+  password: 'xxxx',
   version: 'v1'
 }, bluemix.getServiceCreds('dialog')); // VCAP_SERVICES
 
 // if bluemix credentials exists, then override local
 var iotCredentials = extend({
-  org: 'ld95lc',
+  org: 'xxxx',
   id: ''+Date.now(),
-  "auth-key": 'a-ld95lc-ja0xe12jro',
-  "auth-token": '&r4I0+0AovhFGa@Z?Z'
+  "auth-key": 'a-xxx-xxxxx',
+  "auth-token": ''
 }, bluemix.getIoTServiceCreds());
 
 
@@ -65,26 +65,10 @@ var temps;
 
 var appClient = new ibmiotf.IotfApplication(iotCredentials);
 
-appClient
-.getAllDevices().then (function onSuccess (argument) {
-  console.log("Success");
-  console.log(argument);
-  var deviceResults = argument.results;
-  devices = {};
-  deviceResults.forEach(function (device) {
-    devices[device.deviceId] = device;
-  });
-
-}, function onError (argument) {
-  
-  console.log("Fail");
-  console.log(argument);
-});
-
 // Create the service wrapper
 var dialog = watson.dialog(credentials);
-//var dialog_id = process.env.DIALOG_ID || dialog_id_in_json || '6752b0f4-7d8b-4237-a9fc-b323953312e9';
-var dialog_id = process.env.DIALOG_ID || dialog_id_in_json /*|| 'bbe01ff1-296e-48cc-a38c-e96f046a6bcf'*/;
+
+var dialog_id = process.env.DIALOG_ID || dialog_id_in_json;
 
 //create the dialog
 /*var fullPath = "./dialogs/temp.xml";
@@ -109,8 +93,24 @@ app.post('/conversation', function(req, res, next) {
       return next(err);
     }
     else if(getDevices(resultStr)) {
-      results.response = Object.keys(devices);
-      res.json({ dialog_id: dialog_id, conversation: results});
+      appClient
+      .getAllDevices().then (function onSuccess (argument) {
+        console.log("Success");
+        console.log(argument);
+        var deviceResults = argument.results;
+        devices = {};
+        deviceResults.forEach(function (device) {
+          devices[device.deviceId] = device;
+        });
+        results.response = Object.keys(devices);
+        results.response.unshift("Please select a sensor from the following list : ")
+        res.json({ dialog_id: dialog_id, conversation: results});
+
+      }, function onError (argument) {
+        
+        console.log("Fail");
+        console.log(argument);
+      });
     } 
     else if(getDeviceValue(resultStr)) {
       var device = resultStr.split(',')[0];
@@ -135,10 +135,18 @@ app.post('/conversation', function(req, res, next) {
             if(argument !== undefined && argument[0] !== undefined) {
               var payload = JSON.parse(new Buffer(argument[0].payload, 'base64').toString('ascii'));
               
-              var temperature = payload.temperature;
+              var datapointName = "temperature";
+              // Fetch the value from the sensor.
+              /*
+              format of data
+              { "temperature" : 34}
+              OR
+              { "d" : { "temperature" : 43}  }
+              */
+              var datapointValue = payload[datapointName] || payload.d[datapointName];
               
-              if(temperature !== undefined && temperature !== null) {
-                value = temperature;
+              if(datapointValue !== undefined && datapointValue !== null) {
+                value = datapointValue;
               } else {
                 value = "NO";
               }
@@ -202,7 +210,7 @@ function getDevices(results) {
   return results.indexOf('DEVICES') !== -1;
 }
 
-//return the temperature value
+//return the value of the sensor
 function getDeviceValue(results) {
   return results.indexOf('VALUE') !== -1;
 }

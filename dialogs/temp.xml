@@ -31,7 +31,11 @@
                     <grammar>
                         <item>Sensors</item>
 						<item>$ Sensors</item>
-                        <item>$ sensors</item>
+                        <item>What are the list of sensors</item>
+                        <item>What * list * sensors</item>
+                        <item>Give me the list of sensors</item>
+                        <item>Give * list * sensors</item>
+                        <item>$ sensor</item>
                         <item>Places</item>
 						<item>$ Places</item>
                     </grammar>
