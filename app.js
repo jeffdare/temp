@@ -84,10 +84,10 @@ appClient
 // Create the service wrapper
 var dialog = watson.dialog(credentials);
 //var dialog_id = process.env.DIALOG_ID || dialog_id_in_json || '6752b0f4-7d8b-4237-a9fc-b323953312e9';
-var dialog_id = process.env.DIALOG_ID || dialog_id_in_json || 'bbe01ff1-296e-48cc-a38c-e96f046a6bcf';
+var dialog_id = process.env.DIALOG_ID || dialog_id_in_json /*|| 'bbe01ff1-296e-48cc-a38c-e96f046a6bcf'*/;
 
 //create the dialog
-var fullPath = "./dialogs/temp.xml";
+/*var fullPath = "./dialogs/temp.xml";
 var params = {
   dialog_id : dialog_id,
   file : fs.createReadStream(fullPath)
@@ -98,7 +98,7 @@ dialog.updateDialog(params, function(error, response, body) {
   console.log("resp  : "+JSON.stringify(response));
   console.log("error  : "+error);
   console.log("body  : "+JSON.stringify(body));
-});
+});*/
 
 app.post('/conversation', function(req, res, next) {
   var params = extend({ dialog_id: dialog_id }, req.body);
