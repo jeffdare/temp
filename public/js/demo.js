@@ -66,7 +66,7 @@ $(document).ready(function () {
         console.log(dialog);
         var texts = dialog.conversation.response;
         var response = texts.join('&lt;br/&gt;'); // &lt;br/&gt; is <br/>
-
+        response += '&lt;br/&gt;'
         $chatInput.show();
         $chatInput[0].focus();
 

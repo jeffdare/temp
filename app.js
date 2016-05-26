@@ -28,7 +28,10 @@ var express  = require('express'),
 // Bootstrap application settings
 require('./config/express')(app);
 
+//for conversing with the dialog service
 var DISPLAY_SENSOR_VALUE = "DISPLAY SENSOR VALUE";
+var DISPLAY_NO_DEVICE = "DISPLAY NO DEVICE";
+
 // if bluemix credentials exists, then override local
 var credentials =  extend({
   url: 'https://gateway.watsonplatform.net/dialog/api',
@@ -37,6 +40,7 @@ var credentials =  extend({
   version: 'v1'
 }, bluemix.getServiceCreds('dialog')); // VCAP_SERVICES
 
+// if bluemix credentials exists, then override local
 var iotCredentials = extend({
   org: 'ld95lc',
   id: ''+Date.now(),
@@ -66,7 +70,7 @@ appClient
   console.log("Success");
   console.log(argument);
   var deviceResults = argument.results;
-
+  devices = {};
   deviceResults.forEach(function (device) {
     devices[device.deviceId] = device;
   });
@@ -111,47 +115,65 @@ app.post('/conversation', function(req, res, next) {
     else if(getDeviceValue(resultStr)) {
       var device = resultStr.split(',')[0];
       var selected = devices[device];
-      appClient
-        .getLastEvents(selected.typeId, selected.deviceId).then (function onSuccess (argument) {
-         
-          var payload = JSON.parse(new Buffer(argument[0].payload, 'base64').toString('ascii'));
-          
-          var temperature = payload.temperature;
-          var value = "";
-          if(temperature !== undefined && temperature !== null) {
-            value = temperature;
-          } else {
-            value = "NO"
-          }
-
-          var profile = {
-            client_id: req.body.client_id,
-            dialog_id: dialog_id,
-            name_values: [
-              { name:'value', value: value }
-            ]
-          }; 
-          dialog.updateProfile(profile, function(err, results) {
-            if (err)
+      
+      if(selected === undefined){
+        var params = extend({ dialog_id: dialog_id }, req.body);
+          params.input = DISPLAY_NO_DEVICE;
+          dialog.conversation(params, function(err, results) {
+            if (err){
               return next(err);
-            
-            //call the converse api to get the latest value
-            var params = extend({ dialog_id: dialog_id }, req.body);
-            params.input = DISPLAY_SENSOR_VALUE;
-            dialog.conversation(params, function(err, results) {
-              if (err){
-                return next(err);
-              } 
-              else {
-                res.json({ dialog_id: dialog_id, conversation: results});
-              }
-            });
+            } 
+            else {
+              res.json({ dialog_id: dialog_id, conversation: results});
+            }
           });
-        }, function onError (argument) {
-          
-          console.log("Fail");
-          console.log(argument);
-      });
+      } else {
+        appClient
+          .getLastEvents(selected.typeId, selected.deviceId).then (function onSuccess (argument) {
+           
+            var value = "";
+            if(argument !== undefined && argument[0] !== undefined) {
+              var payload = JSON.parse(new Buffer(argument[0].payload, 'base64').toString('ascii'));
+              
+              var temperature = payload.temperature;
+              
+              if(temperature !== undefined && temperature !== null) {
+                value = temperature;
+              } else {
+                value = "NO";
+              }
+            } else 
+              value = "NO";
+
+            var profile = {
+              client_id: req.body.client_id,
+              dialog_id: dialog_id,
+              name_values: [
+                { name:'value', value: value }
+              ]
+            }; 
+            dialog.updateProfile(profile, function(err, results) {
+              if (err)
+                return next(err);
+              
+              //call the converse api to get the latest value
+              var params = extend({ dialog_id: dialog_id }, req.body);
+              params.input = DISPLAY_SENSOR_VALUE;
+              dialog.conversation(params, function(err, results) {
+                if (err){
+                  return next(err);
+                } 
+                else {
+                  res.json({ dialog_id: dialog_id, conversation: results});
+                }
+              });
+            });
+          }, function onError (argument) {
+            
+            console.log("Fail");
+            console.log(argument);
+        });
+      }
     }
     else
       res.json({ dialog_id: dialog_id, conversation: results});

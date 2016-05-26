@@ -65,10 +65,30 @@
                         <grammar>
                             <item>DISPLAY SENSOR VALUE</item>
                         </grammar>
+                        <if>
+                            <cond varName="value" operator="EQUALS">NO</cond>
+                            <output>
+                                <prompt>
+                                    <item>Sorry not able to read the temperature at {location}</item>
+                                </prompt>
+                                <goto ref="getUserInput_2442994"/>
+                            </output>
+                        </if>
                         <output>
                             <prompt>
                                 <item>The temperature at {location} is {value}</item>
                             </prompt>
+                        </output>
+                    </input>
+                    <input>
+                        <grammar>
+                            <item>DISPLAY NO DEVICE</item>
+                        </grammar>
+                        <output>
+                            <prompt>
+                                <item>Are you playing with me right?? There is no devices named {location} :D</item>
+                            </prompt>
+                            <goto ref="getUserInput_2442994"/>
                         </output>
                     </input>
                 </getUserInput>
